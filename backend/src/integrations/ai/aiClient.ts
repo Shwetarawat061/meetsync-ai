@@ -75,7 +75,12 @@ export interface MomResponse {
   summary: string;
 }
 export interface DecisionsResponse {
-  decisions: { decision: string; madeBy: string; rationale?: string }[];
+  decisions: {
+    decision: string;
+    madeBy: string;
+    rationale?: string;
+    source_span?: SourceSpan;
+  }[];
 }
 export interface DeadlinesResponse {
   deadlines: {
