@@ -19,6 +19,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.117.1",
     "axios": "^1.19.0",
     "axios-retry": "^4.5.0",
     "bcrypt": "^6.0.0",
@@ -36,6 +37,7 @@
     "mongoose": "^9.9.1",
     "multer": "^2.2.0",
     "nodemailer": "^9.0.3",
+    "openai": "^7.4.0",
     "opossum": "^10.0.0",
     "puppeteer": "^25.4.0",
     "zod": "^4.4.3"

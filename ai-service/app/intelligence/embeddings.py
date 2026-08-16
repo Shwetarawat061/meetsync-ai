@@ -39,7 +39,7 @@ def _fallback_embedding(text: str, dimension: int = 384) -> list[float]:
 
 def get_embedding_model(model_name: str = _DEFAULT_MODEL, device: str = "cpu") -> Any:
     global SentenceTransformer
-    if os.environ.get("MEETSYNC_USE_LOCAL_EMBEDDINGS", "1") == "1":
+    if os.environ.get("MEETSYNC_USE_LOCAL_EMBEDDINGS") == "1":
         return None
 
     if SentenceTransformer is None:
@@ -64,7 +64,7 @@ def embed(
     if not texts_list:
         return []
 
-    if os.environ.get("MEETSYNC_USE_LOCAL_EMBEDDINGS", "1") == "1":
+    if os.environ.get("MEETSYNC_USE_LOCAL_EMBEDDINGS") == "1":
         return [_fallback_embedding(text) for text in texts_list]
 
     try:

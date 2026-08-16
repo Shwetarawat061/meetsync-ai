@@ -120,27 +120,26 @@ function normalizeDecisionEntry(
     return null;
   }
 
+  const rawSpan = span as Record<string, unknown>;
+  const transcriptIdValue =
+    typeof rawSpan.transcript_id === 'string'
+      ? rawSpan.transcript_id
+      : transcriptId;
+
   const source_span: DecisionSourceSpan = {
-    transcript_id:
-      typeof (span as Record<string, unknown>).transcript_id === 'string'
-        ? ((span as Record<string, unknown>).transcript_id as string)
-        : transcriptId,
-    segment_id: String(
-      (span as Record<string, unknown>).segment_id ?? 'seg_unknown'
-    ),
-    start_seconds: Number((span as Record<string, unknown>).start_seconds ?? 0),
-    end_seconds: Number((span as Record<string, unknown>).end_seconds ?? 0),
-    text: String((span as Record<string, unknown>).text ?? ''),
-    speaker: (span as Record<string, unknown>).speaker
-      ? String((span as Record<string, unknown>).speaker)
-      : undefined,
+    transcript_id: transcriptIdValue,
+    segment_id: String(rawSpan.segment_id ?? 'seg_unknown'),
+    start_seconds: Number(rawSpan.start_seconds ?? 0),
+    end_seconds: Number(rawSpan.end_seconds ?? 0),
+    text: String(rawSpan.text ?? ''),
+    speaker: typeof rawSpan.speaker === 'string' ? rawSpan.speaker : undefined,
     character_start:
-      (span as Record<string, unknown>).character_start !== undefined
-        ? Number((span as Record<string, unknown>).character_start)
+      rawSpan.character_start !== undefined
+        ? Number(rawSpan.character_start)
         : undefined,
     character_end:
-      (span as Record<string, unknown>).character_end !== undefined
-        ? Number((span as Record<string, unknown>).character_end)
+      rawSpan.character_end !== undefined
+        ? Number(rawSpan.character_end)
         : undefined,
   };
 
@@ -237,14 +236,19 @@ async function callChatProvider(
       const modName = '@anthropic-ai/sdk';
       const { Anthropic } = await import(modName);
       const client = new Anthropic({ apiKey: process.env.CLAUDE_API_KEY });
-      const response = await client.completions.create({
-        model: 'claude-3.1',
-        prompt,
+      const response = await client.messages.create({
+        model: 'claude-3-5-sonnet-20240620',
         max_tokens: 1200,
         temperature: 0.2,
+        messages: [{ role: 'user', content: prompt }],
       });
-      const text = response?.completion;
-      if (typeof text === 'string') {
+      const text = response.content
+        .filter((part: Record<string, unknown>) => part.type === 'text')
+        .map((part: Record<string, unknown>) =>
+          'text' in part ? String(part.text) : ''
+        )
+        .join('');
+      if (typeof text === 'string' && text.length > 0) {
         return { text, provider: 'claude' };
       }
     } catch {

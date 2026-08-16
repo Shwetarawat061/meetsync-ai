@@ -1,7 +1,7 @@
 import { Router, Response } from 'express';
 import { Types } from 'mongoose';
 import { Meeting } from '../models/Meeting.js';
-import { Mom, IMom, IKeyPoint, IDraftActionItem } from '../models/Mom.js';
+import { Mom } from '../models/Mom.js';
 import { ReviewVersion } from '../models/ReviewVersion.js';
 import { requireAuth, AuthRequest } from '../middleware/authMiddleware.js';
 
@@ -13,7 +13,8 @@ const router = Router({ mergeParams: true });
  */
 router.get('/', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
-    const meeting = await Meeting.findById(req.params.id);
+    const meetingId = req.params.id as string;
+    const meeting = await Meeting.findById(meetingId);
 
     if (!meeting) {
       res.status(404).json({ message: 'Meeting not found' });
@@ -39,7 +40,7 @@ router.get('/', requireAuth, async (req: AuthRequest, res: Response) => {
       return;
     }
 
-    const mom = await Mom.findOne({ meetingId: req.params.id }).populate([
+    const mom = await Mom.findOne({ meetingId: meetingId }).populate([
       { path: 'attendees.userId', select: 'name email' },
       { path: 'draftActionItems.assigneeUserId', select: 'name email' },
       { path: 'draftActionItems.relatedTaskIds' },
@@ -52,7 +53,7 @@ router.get('/', requireAuth, async (req: AuthRequest, res: Response) => {
     }
 
     // Get latest review version for metadata
-    const latestReview = await ReviewVersion.findOne({ meetingId: req.params.id })
+    const latestReview = await ReviewVersion.findOne({ meetingId })
       .sort({ version: -1 })
       .populate('reviewedBy', 'name');
 
@@ -61,12 +62,18 @@ router.get('/', requireAuth, async (req: AuthRequest, res: Response) => {
       reviewVersion: latestReview
         ? {
             version: latestReview.version,
-            reviewedBy: (latestReview.reviewedBy as any)?.name || 'Unknown',
+            reviewedBy:
+              (
+                latestReview.reviewedBy as unknown as
+                  { name?: string } | null | undefined
+              )?.name || 'Unknown',
             reviewedAt: latestReview.createdAt,
             locked: latestReview.locked,
           }
         : null,
-      editableBy: req.user!.role === 'admin' || req.user!.sub === meeting.createdBy.toString(),
+      editableBy:
+        req.user!.role === 'admin' ||
+        req.user!.sub === meeting.createdBy.toString(),
       canLock: req.user!.role === 'admin',
     });
   } catch (error) {
@@ -83,35 +90,37 @@ router.get('/', requireAuth, async (req: AuthRequest, res: Response) => {
 router.patch('/', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
     const { summary, keyPoints, draftActionItems, attendees } = req.body;
+    const meetingId = req.params.id as string;
 
-    const meeting = await Meeting.findById(req.params.id);
+    const meeting = await Meeting.findById(meetingId);
     if (!meeting) {
       res.status(404).json({ message: 'Meeting not found' });
       return;
     }
 
-    // Check permissions
-    if (req.user!.role === 'employee' && req.user!.sub !== meeting.createdBy.toString()) {
+    if (
+      req.user!.role === 'employee' &&
+      req.user!.sub !== meeting.createdBy.toString()
+    ) {
       res.status(403).json({ message: 'Access denied' });
       return;
     }
 
-    const mom = await Mom.findOne({ meetingId: req.params.id });
+    const mom = await Mom.findOne({ meetingId });
     if (!mom) {
       res.status(404).json({ message: 'MoM not found' });
       return;
     }
 
-    // Check if current review is locked
-    const latestReview = await ReviewVersion.findOne({ meetingId: req.params.id })
-      .sort({ version: -1 });
+    const latestReview = await ReviewVersion.findOne({ meetingId }).sort({
+      version: -1,
+    });
 
     if (latestReview?.locked) {
       res.status(409).json({ message: 'Cannot edit locked MoM version' });
       return;
     }
 
-    // Update mom fields
     if (summary !== undefined) mom.summary = summary;
     if (keyPoints !== undefined) mom.keyPoints = keyPoints;
     if (draftActionItems !== undefined) mom.draftActionItems = draftActionItems;
@@ -120,16 +129,33 @@ router.patch('/', requireAuth, async (req: AuthRequest, res: Response) => {
     mom.version = (mom.version || 1) + 1;
     await mom.save();
 
-    // Create ReviewVersion entry for audit trail
     const nextVersion = (latestReview?.version || 0) + 1;
     await ReviewVersion.create({
-      meetingId: req.params.id,
+      meetingId,
       version: nextVersion,
       reviewedBy: req.user!.sub,
       fields: [
-        { field: 'summary', source: 'manual', original: mom.summary, edited: summary || mom.summary, diff: [] },
-        { field: 'keyPoints', source: 'manual', original: JSON.stringify(mom.keyPoints), edited: JSON.stringify(keyPoints || mom.keyPoints), diff: [] },
-        { field: 'draftActionItems', source: 'manual', original: JSON.stringify(mom.draftActionItems), edited: JSON.stringify(draftActionItems || mom.draftActionItems), diff: [] },
+        {
+          field: 'summary',
+          source: 'manual',
+          original: mom.summary,
+          edited: summary || mom.summary,
+          diff: [],
+        },
+        {
+          field: 'keyPoints',
+          source: 'manual',
+          original: JSON.stringify(mom.keyPoints),
+          edited: JSON.stringify(keyPoints || mom.keyPoints),
+          diff: [],
+        },
+        {
+          field: 'draftActionItems',
+          source: 'manual',
+          original: JSON.stringify(mom.draftActionItems),
+          edited: JSON.stringify(draftActionItems || mom.draftActionItems),
+          diff: [],
+        },
       ],
     });
 
@@ -148,41 +174,47 @@ router.patch('/', requireAuth, async (req: AuthRequest, res: Response) => {
  * POST /api/meetings/:id/mom/lock
  * Lock the current MOM version (prevent further edits)
  */
-router.post('/:momId/lock', requireAuth, async (req: AuthRequest, res: Response) => {
-  try {
-    if (req.user!.role !== 'admin') {
-      res.status(403).json({ message: 'Only admins can lock MoM' });
-      return;
+router.post(
+  '/:momId/lock',
+  requireAuth,
+  async (req: AuthRequest, res: Response) => {
+    try {
+      if (req.user!.role !== 'admin') {
+        res.status(403).json({ message: 'Only admins can lock MoM' });
+        return;
+      }
+
+      const meetingId = req.params.id as string;
+      const meeting = await Meeting.findById(meetingId);
+      if (!meeting) {
+        res.status(404).json({ message: 'Meeting not found' });
+        return;
+      }
+
+      const latestReview = await ReviewVersion.findOne({ meetingId }).sort({
+        version: -1,
+      });
+
+      if (!latestReview) {
+        res.status(404).json({ message: 'No review version found' });
+        return;
+      }
+
+      latestReview.locked = true;
+      latestReview.lockedAt = new Date();
+      latestReview.lockedBy = new Types.ObjectId(req.user!.sub);
+      await latestReview.save();
+
+      res.json({
+        message: 'MoM version locked successfully',
+        version: latestReview.version,
+        lockedAt: latestReview.lockedAt,
+      });
+    } catch (error) {
+      console.error('Error locking MOM:', error);
+      res.status(500).json({ message: 'Internal server error' });
     }
-
-    const meeting = await Meeting.findById(req.params.id);
-    if (!meeting) {
-      res.status(404).json({ message: 'Meeting not found' });
-      return;
-    }
-
-    const latestReview = await ReviewVersion.findOne({ meetingId: req.params.id })
-      .sort({ version: -1 });
-
-    if (!latestReview) {
-      res.status(404).json({ message: 'No review version found' });
-      return;
-    }
-
-    latestReview.locked = true;
-    latestReview.lockedAt = new Date();
-    latestReview.lockedBy = new Types.ObjectId(req.user!.sub);
-    await latestReview.save();
-
-    res.json({
-      message: 'MoM version locked successfully',
-      version: latestReview.version,
-      lockedAt: latestReview.lockedAt,
-    });
-  } catch (error) {
-    console.error('Error locking MOM:', error);
-    res.status(500).json({ message: 'Internal server error' });
   }
-});
+);
 
 export default router;

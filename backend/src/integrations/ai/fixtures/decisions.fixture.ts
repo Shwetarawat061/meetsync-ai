@@ -19,7 +19,8 @@ export const decisionsFixture: DecisionsResponse = {
       },
     },
     {
-      decision: 'The team will review the roadmap and reduce the backlog by 20%.',
+      decision:
+        'The team will review the roadmap and reduce the backlog by 20%.',
       madeBy: 'SPEAKER_01',
       rationale:
         'This was framed as a planning decision to tighten scope after the sprint review.',

@@ -143,7 +143,7 @@ async function buildDocx(jobId: string, meetingId: string): Promise<string> {
     children.push(body(mom.summary + auditTag(markerMap.get('summary'))));
     children.push(...auditPara(markerMap.get('summary')));
 
-    if (mom.agenda.length) {
+    if (mom.agenda?.length) {
       children.push(h2('Agenda'));
       mom.agenda.forEach((item, i) => {
         const marker = i === 0 ? markerMap.get('agenda') : undefined;
@@ -152,7 +152,7 @@ async function buildDocx(jobId: string, meetingId: string): Promise<string> {
       children.push(...auditPara(markerMap.get('agenda')));
     }
 
-    if (mom.discussionPoints.length) {
+    if (mom.discussionPoints?.length) {
       children.push(h2('Discussion Points'));
       mom.discussionPoints.forEach((dp) =>
         children.push(body(`[${dp.speaker}] ${dp.point}`))
@@ -318,14 +318,14 @@ async function buildPdf(jobId: string, meetingId: string): Promise<string> {
 
   if (mom) {
     html += `<h1>Minutes of Meeting</h1><h2>Summary</h2><p>${esc(mom.summary)}${auditSpan(markerMap.get('summary'))}</p>`;
-    if (mom.agenda.length) {
+    if (mom.agenda?.length) {
       html += `<h2>Agenda</h2><ol>`;
       mom.agenda.forEach((a) => {
         html += `<li>${esc(a)}</li>`;
       });
       html += `</ol>${auditSpan(markerMap.get('agenda'))}`;
     }
-    if (mom.discussionPoints.length) {
+    if (mom.discussionPoints?.length) {
       html += `<h2>Discussion Points</h2><ul>`;
       mom.discussionPoints.forEach((dp) => {
         html += `<li><b>${esc(dp.speaker)}:</b> ${esc(dp.point)}</li>`;

@@ -9,6 +9,8 @@ on:
 jobs:
   ai-service-ci:
     runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: .
     defaults:
       run:
         working-directory: ./ai-service
