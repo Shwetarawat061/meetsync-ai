@@ -172,18 +172,18 @@ def extract_decisions(payload: dict) -> DecisionLog:
     """
 
     transcript_data = payload.get("transcript")
-    text = payload.get("text")
-    max_decisions = int(payload.get("max_decisions", 10))
+text = payload.get("text")
+max_decisions = int(payload.get("max_decisions", 10))
 
-    if not transcript_data and not text:
-        raise HTTPException(
-            status_code=400,
-            detail={
-                "code": "validation_error",
-                "message": "Provide `transcript` or `text` in the request body",
-                "details": {"required_fields": ["transcript", "text"]},
-            },
-        )
+if "transcript" not in payload and "text" not in payload:
+    raise HTTPException(
+        status_code=400,
+        detail={
+            "code": "validation_error",
+            "message": "Provide `transcript` or `text` in the request body",
+            "details": {"required_fields": ["transcript", "text"]},
+        },
+    )
 
     transcript: Transcript | None = None
     if transcript_data:
