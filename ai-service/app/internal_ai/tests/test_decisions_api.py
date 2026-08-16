@@ -1,8 +1,15 @@
 import uuid
 
+import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
+
+
+@pytest.fixture(autouse=True)
+def offline_embeddings(monkeypatch):
+    monkeypatch.setenv("MEETSYNC_USE_LOCAL_EMBEDDINGS", "1")
+
 
 client = TestClient(app)
 
