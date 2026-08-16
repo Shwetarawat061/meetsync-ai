@@ -122,7 +122,9 @@ function normalizeDecisionEntry(
 
   const rawSpan = span as Record<string, unknown>;
   const transcriptIdValue =
-    typeof rawSpan.transcript_id === 'string' ? rawSpan.transcript_id : transcriptId;
+    typeof rawSpan.transcript_id === 'string'
+      ? rawSpan.transcript_id
+      : transcriptId;
 
   const source_span: DecisionSourceSpan = {
     transcript_id: transcriptIdValue,

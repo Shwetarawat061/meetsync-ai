@@ -1,12 +1,12 @@
 /**
  * MOM JSON Schema Design for MeetSync
- * 
+ *
  * This schema is designed for:
  * - AI-generated MOM drafts
  * - Frontend review editor rendering
  * - ReviewVersion diff tracking per field
  * - Direct embedding in meeting export (DOCX, PDF)
- * 
+ *
  * Architecture:
  * 1. Backend generates MOM with AI-extracted data
  * 2. Frontend receives JSON for editor rendering
@@ -63,18 +63,18 @@ export interface IMomJSON {
   // Meeting reference
   meetingId: string; // ObjectId
   title: string; // from Meeting.title
-  
+
   // Core MOM fields (editable in review editor)
   attendees: IAttendee[];
   summary: string; // Rich text / Markdown (30-60 sentences)
   keyPoints: IKeyPoint[];
   draftActionItems: IDraftActionItem[];
-  
+
   // Metadata
   generatedAt: Date; // when AI generated this MOM
   source: 'ai' | 'manual'; // was it auto-generated or manually created?
   version: number; // MOM version (increments with ReviewVersion updates)
-  
+
   // Optional: AI confidence/quality metrics
   metrics?: {
     transcriptAccuracy?: number; // 0-100, confidence in speech-to-text
@@ -108,7 +108,7 @@ export interface IMomEditRequest {
   version: number; // must match current version
   fields: {
     field: 'summary' | 'keyPoints' | 'draftActionItems' | 'attendees';
-    value: any; // new value for field
+    value: string | IKeyPoint[] | IDraftActionItem[] | IAttendee[];
   }[];
 }
 
@@ -120,7 +120,7 @@ export const MOM_RESPONSE_EXAMPLE: IMomResponse = {
   mom: {
     meetingId: '507f1f77bcf86cd799439011',
     title: 'Q3 Product Planning Sprint Kickoff',
-    
+
     attendees: [
       {
         userId: '507f1f77bcf86cd799439001',
@@ -144,7 +144,7 @@ export const MOM_RESPONSE_EXAMPLE: IMomResponse = {
         turnsTaken: 5,
       },
     ],
-    
+
     summary: `The team met to plan Q3 deliverables and align on priorities. Alice opened with the vision: deliver the new search functionality and complete the mobile app redesign. 
     
     The conversation centered on three areas: (1) Timeline feasibility given team capacity, (2) Technical debt paydown in parallel with feature work, and (3) Dependencies with the design team.
@@ -152,7 +152,7 @@ export const MOM_RESPONSE_EXAMPLE: IMomResponse = {
     Alice emphasized that search is critical for user retention—we're losing users to faster competitors. Bob raised concerns about the mobile redesign timeline; he estimates 6 weeks vs. the planned 4. After discussion, the team agreed to a phased approach: core UX in 4 weeks, polish in 5-6.
     
     Key decision: prioritize search completion over mobile polish in Q3; defer cosmetic improvements to Q4. The team will start with search immediately, with Bob leading the backend indexing work.`,
-    
+
     keyPoints: [
       {
         id: 'kp-001',
@@ -198,10 +198,13 @@ export const MOM_RESPONSE_EXAMPLE: IMomResponse = {
             text: 'prioritize search completion over mobile polish in Q3; defer cosmetic improvements to Q4',
           },
         ],
-        relatedTaskIds: ['507f1f77bcf86cd799439101', '507f1f77bcf86cd799439102'],
+        relatedTaskIds: [
+          '507f1f77bcf86cd799439101',
+          '507f1f77bcf86cd799439102',
+        ],
       },
     ],
-    
+
     draftActionItems: [
       {
         id: '507f1f77bcf86cd799439101',
@@ -257,25 +260,25 @@ export const MOM_RESPONSE_EXAMPLE: IMomResponse = {
         status: 'draft',
       },
     ],
-    
+
     generatedAt: new Date('2025-08-14T14:30:00Z'),
     source: 'ai',
     version: 1,
-    
+
     metrics: {
       transcriptAccuracy: 94,
       summaryCoherence: 87,
       actionItemsExtraction: 92,
     },
   },
-  
+
   reviewVersion: {
     version: 0,
     reviewedBy: 'None',
     reviewedAt: new Date(),
     locked: false,
   },
-  
+
   editableBy: true,
   canLock: true,
 };
@@ -293,7 +296,7 @@ export const MOM_EDITOR_WIDGETS = {
     editable: false, // derived from Meeting.participants
     columns: ['name', 'role', 'speakingDuration', 'turnsTaken'],
   },
-  
+
   summary: {
     type: 'rich-text-editor',
     editable: true,
@@ -301,7 +304,7 @@ export const MOM_EDITOR_WIDGETS = {
     minLength: 200,
     maxLength: 5000,
   },
-  
+
   keyPoints: {
     type: 'list-with-tagging',
     editable: true,
@@ -318,7 +321,7 @@ export const MOM_EDITOR_WIDGETS = {
       timestamp: { type: 'number', required: false, min: 0 },
     },
   },
-  
+
   draftActionItems: {
     type: 'list-with-inline-edit',
     editable: true,

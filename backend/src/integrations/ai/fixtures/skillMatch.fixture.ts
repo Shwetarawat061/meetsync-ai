@@ -24,7 +24,8 @@ export const skillMatchFixture: SkillMatchResponse = {
       final_score: 0.49,
       utilization: 0.6,
       available_fraction: 0.4,
-      reason: 'Relevant experience exists, but workload and skills are a weaker fit.',
+      reason:
+        'Relevant experience exists, but workload and skills are a weaker fit.',
     },
   ],
 };

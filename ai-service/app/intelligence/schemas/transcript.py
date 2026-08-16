@@ -61,7 +61,7 @@ class EmbeddingResponse(BaseModel):
 
 
 class EmployeeSkill(BaseModel):
-    skill_id: str = Field(pattern=r"^skill_[A-Za-z0-9_-]+$")
+    skill_id: str = Field(pattern=r"^[A-Za-z0-9_-]+$")
     name: str
     description: str | None = None
     proficiency: float = Field(ge=0, le=1, default=1.0)
@@ -81,7 +81,7 @@ class WorkloadSummary(BaseModel):
 class SkillMatchCandidate(BaseModel):
     employee_id: UUID
     name: str
-    skills: list[EmployeeSkill] = Field(min_length=1)
+    skills: list[EmployeeSkill] = Field(default_factory=list)
     workload: WorkloadSummary
     profile_embedding: list[float] | None = None
 
@@ -90,7 +90,7 @@ class SkillMatchRequest(BaseModel):
     task_id: str | UUID
     task_description: str
     required_skills: list[str] | None = None
-    candidates: list[SkillMatchCandidate] = Field(min_length=1)
+    candidates: list[SkillMatchCandidate] = Field(default_factory=list)
     workload_weight: float = Field(ge=0, le=1, default=0.25)
 
 
@@ -132,7 +132,7 @@ class DecisionLogEntry(BaseModel):
 
 class DecisionLog(BaseModel):
     transcript_id: UUID
-    decisions: list[DecisionLogEntry] = Field(min_length=1)
+    decisions: list[DecisionLogEntry] = Field(default_factory=list)
 
 
 class SpeakerTalkTime(BaseModel):
@@ -150,7 +150,7 @@ class TaskAssignment(BaseModel):
 
 class MeetingEffectivenessRequest(BaseModel):
     meeting_id: str | UUID
-    duration_seconds: float = Field(gt=0)
+    duration_seconds: float = Field(ge=0)
     talk_time: list[SpeakerTalkTime] = Field(min_length=1)
     decision_log: DecisionLog
     assignments: list[TaskAssignment] = Field(default_factory=list)
