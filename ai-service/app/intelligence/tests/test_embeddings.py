@@ -38,7 +38,8 @@ class DummySentenceTransformer:
 
 
 @pytest.fixture(autouse=True)
-def clear_model_cache():
+def clear_model_cache(monkeypatch):
+    monkeypatch.delenv("MEETSYNC_USE_LOCAL_EMBEDDINGS", raising=False)
     embeddings._MODEL_CACHE.clear()
     yield
     embeddings._MODEL_CACHE.clear()
