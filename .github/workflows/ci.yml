@@ -9,6 +9,9 @@ on:
 jobs:
   backend-ci:
     runs-on: ubuntu-latest
+    env:
+      MONGO_URI: mongodb://127.0.0.1:27017/meetsync_test
+      JWT_SECRET: ci-test-secret-at-least-32-chars!!
     services:
       mongodb:
         image: mongo:7
