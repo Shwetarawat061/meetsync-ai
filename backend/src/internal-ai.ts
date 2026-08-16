@@ -243,8 +243,10 @@ async function callChatProvider(
         messages: [{ role: 'user', content: prompt }],
       });
       const text = response.content
-        .filter((part) => part.type === 'text')
-        .map((part) => ('text' in part ? part.text : ''))
+        .filter((part: Record<string, unknown>) => part.type === 'text')
+        .map((part: Record<string, unknown>) =>
+          'text' in part ? String(part.text) : ''
+        )
         .join('');
       if (typeof text === 'string' && text.length > 0) {
         return { text, provider: 'claude' };
