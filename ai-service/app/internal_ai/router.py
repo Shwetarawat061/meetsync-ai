@@ -14,6 +14,7 @@ from typing import Any
 
 import numpy as np
 from fastapi import APIRouter, HTTPException
+from pydantic import ValidationError
 
 from app.intelligence.embeddings import embed
 from app.intelligence.schemas import (
@@ -178,7 +179,7 @@ def extract_decisions(payload: dict) -> DecisionLog:
     if text is not None and isinstance(text, str) and not text.strip():
         return DecisionLog(transcript_id=uuid.UUID(int=0), decisions=[])
 
-    if not transcript_data and not text:
+    if "transcript" not in payload and "text" not in payload:
         raise HTTPException(
             status_code=400,
             detail={
@@ -192,7 +193,7 @@ def extract_decisions(payload: dict) -> DecisionLog:
     if transcript_data:
         try:
             transcript = Transcript(**transcript_data)
-        except (TypeError, ValueError) as exc:  # pragma: no cover - validation errors surfaced to caller
+        except (TypeError, ValueError, ValidationError) as exc:  # pragma: no cover - validation errors surfaced to caller
             raise HTTPException(
                 status_code=400,
                 detail={

@@ -39,7 +39,7 @@ class DummySentenceTransformer:
 
 @pytest.fixture(autouse=True)
 def clear_model_cache(monkeypatch):
-    monkeypatch.delenv("MEETSYNC_USE_LOCAL_EMBEDDINGS", raising=False)
+    monkeypatch.setenv("MEETSYNC_USE_LOCAL_EMBEDDINGS", "0")
     embeddings._MODEL_CACHE.clear()
     yield
     embeddings._MODEL_CACHE.clear()
