@@ -52,6 +52,7 @@ def test_embed_returns_empty_list_for_no_texts(monkeypatch):
 
 def test_embed_returns_normalized_vectors_and_uses_cached_model(monkeypatch):
     monkeypatch.setattr(embeddings, "SentenceTransformer", DummySentenceTransformer)
+    monkeypatch.setenv("MEETSYNC_USE_LOCAL_EMBEDDINGS", "0")
 
     first_model = embeddings.get_embedding_model("dummy", device="cpu")
     second_model = embeddings.get_embedding_model("dummy", device="cpu")

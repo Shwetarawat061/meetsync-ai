@@ -61,7 +61,7 @@ class EmbeddingResponse(BaseModel):
 
 
 class EmployeeSkill(BaseModel):
-    skill_id: str = Field(pattern=r"^[A-Za-z0-9_-]+$")
+    skill_id: str = Field(min_length=1)
     name: str
     description: str | None = None
     proficiency: float = Field(ge=0, le=1, default=1.0)

@@ -203,6 +203,16 @@ def extract_decisions(payload: dict) -> DecisionLog:
                 },
             ) from exc
 
+    if "transcript" not in payload and "text" not in payload:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "validation_error",
+                "message": "Provide `transcript` or `text` in the request body",
+                "details": {"required_fields": ["transcript", "text"]},
+            },
+        )
+
     if not text and transcript:
         text = transcript.text
 
@@ -304,8 +314,8 @@ def match_skills(request: SkillMatchRequest) -> SkillMatchResponse:
             status_code=400,
             detail={
                 "code": "validation_error",
-                "message": "At least one candidate is required for skill matching",
-                "details": {"field": "candidates"},
+                "message": "At least one candidate is required",
+                "details": {"required_fields": ["candidates"]},
             },
         )
 
